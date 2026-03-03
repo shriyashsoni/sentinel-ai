@@ -1,6 +1,7 @@
 import json
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend import config
 from backend.repository import JsonlRunRepository
@@ -9,6 +10,24 @@ from backend.services import evaluate, evaluate_and_execute, execute
 
 app = FastAPI(title="SentinelAI Backend", version="0.1.0")
 repo = JsonlRunRepository(config.RUN_HISTORY_FILE)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ALLOW_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "name": "SentinelAI Backend",
+        "status": "ok",
+        "health": "/health",
+        "docs": "/docs",
+    }
 
 
 @app.get("/health")

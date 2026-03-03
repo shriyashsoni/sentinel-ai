@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -9,3 +10,5 @@ DEFAULT_INPUT_FILE = SIM_DATA_DIR / "sample_wallet.json"
 DEFAULT_DECISION_FILE = SIM_DATA_DIR / "risk_decision.json"
 DEFAULT_ONCHAIN_FILE = SIM_DATA_DIR / "onchain_result.json"
 RUN_HISTORY_FILE = SIM_DATA_DIR / "backend_runs.jsonl"
+
+CORS_ALLOW_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",") if origin.strip()]
