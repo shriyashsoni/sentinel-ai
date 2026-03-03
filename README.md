@@ -1,100 +1,119 @@
 # SentinelAI — Autonomous Web3 Risk Guardian
 
-SentinelAI is a deterministic + autonomous safety layer for Web3 wallets.
-It evaluates wallet activity signals, computes a reproducible risk score, and triggers protective onchain actions through a CRE workflow.
+SentinelAI is an autonomous wallet-defense system for Web3 users. It combines deterministic off-chain risk scoring with on-chain enforcement so that risky behavior can be detected early and protective actions can be executed automatically through Chainlink CRE workflows.
 
-## Project Structure
+This repository contains a complete MVP: smart contract, backend API, risk engine, frontend dashboard, CRE workflow configs, and reproducible simulation artifacts.
 
-```text
-sentinel-ai/
-├── contracts/
-│   └── GuardianVault.sol
-├── workflows/
-│   └── guardian-workflow.yaml
-├── scripts/
-│   ├── risk_engine.py
-│   └── onchain_action.py
-├── backend/
-│   ├── app.py
-│   ├── config.py
-│   ├── repository.py
-│   ├── schemas.py
-│   └── services.py
-├── simulation-data/
-│   ├── sample_wallet.json
-│   ├── risk_decision.json         # generated
-│   └── onchain_result.json        # generated
-├── .env.example
-├── requirements.txt
-└── submission.md
+## Why SentinelAI
+
+Web3 users still face approval scams, malicious contracts, phishing flows, and high-velocity draining behavior. Most protections are reactive.
+
+SentinelAI provides a proactive layer:
+- Ingest wallet behavior signals
+- Compute deterministic risk scores (reproducible rules)
+- Trigger on-chain actions when threshold is crossed
+- Persist artifacts for verification and audit
+
+## Architecture (End-to-End)
+
+```mermaid
+flowchart LR
+    U[Wallet / User Activity] --> F[Frontend Dashboard\nReact + Wagmi]
+    F --> B[Backend API\nFastAPI]
+    B --> R[Risk Engine\nDeterministic Rules]
+    R --> D{riskScore >= threshold?}
+    D -- No --> L[Store Run + Return Safe Status]
+    D -- Yes --> X[Execution Layer\nWeb3.py + CRE Workflow]
+    X --> C[GuardianVault.sol\nSepolia]
+    C --> E[Events: RiskDetected / ProtectionActivated]
+    E --> F
 ```
 
 ## Deterministic Risk Model
 
-Risk score rules:
-
+Risk score rules currently implemented:
 - +40 if `approvalAmountPercent > 80`
 - +30 if `blacklistMatch == true`
 - +20 if `contractReputationScore < 30`
 - +10 if `transactionVelocity > velocityThreshold`
 - +5 if `newContractInteraction == true`
 
-Protection threshold: `riskScore >= 70`
+Protection trigger: `riskScore >= 70`
 
-## Contract
+This gives transparent and reproducible behavior for demos, testing, and audits.
 
-`GuardianVault.sol` exposes:
+## Smart Contract Details
 
-- `flagContract(address)`
-- `reportRisk(address,uint256)`
-- `activateProtection(address)`
-- `revokeHighRiskApproval(address,address)`
-- `emergencyLock(address)`
+Contract: `contracts/GuardianVault.sol`
 
-It stores:
+Main functions:
+- `reportRisk(address user, uint256 score)`
+- `activateProtection(address user)`
+- `flagContract(address contractAddress)`
+- `revokeHighRiskApproval(address user, address token)`
+- `emergencyLock(address user)`
 
+Core state:
 - `protectionActive`
-- `flaggedContracts`
 - `riskScores`
+- `flaggedContracts`
 
-## Setup
+### Deployed Contract (from repository artifacts)
 
-1. Create and activate a Python environment.
-2. Install dependencies:
+- Network: `Ethereum Sepolia`
+- Chain ID: `11155111`
+- Deployer: `0x6F9788e39e8C629f73C27db48cce03eA1fB9Acc1`
+- Contract address: `0xD7840983B638cFcf9fC0CD32b358B02eb43E59Ef`
+- Explorer: `https://sepolia.etherscan.io/address/0xD7840983B638cFcf9fC0CD32b358B02eb43E59Ef`
+- Deployment tx hash (artifact): `fb31ca91659f2d5b2b0b6d2494404f7811d6e4334ccbb0d7cac561b40893f223`
+
+Recent pipeline output example (`simulation-data/onchain_result.json`):
+- `reportRiskTxHash`: `0x4c93228a7e654fa8d1b03852cd8b5d36d8831f5e1f97d964031b52bc7f1e04f2`
+- `activateProtectionTxHash`: `0x1feae408635bf608be33e8d5e04a50e4607128481c2af10615e4a054ac33f204`
+
+## Tech Stack
+
+- Frontend: `React`, `TypeScript`, `Vite`, `Wagmi`, `Viem`
+- Backend: `Python`, `FastAPI`, `Pydantic`
+- Blockchain: `Solidity`, `Web3.py`, `Ethereum Sepolia`
+- Agent/Workflow: `Chainlink CRE` (`sentinel-guardian` + `sentinel-guardian-go`)
+- Tooling: `PowerShell`, `JSONL/JSON artifacts`, deterministic simulation scripts
+
+## Local Setup
+
+1. Install Python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Copy environment file and fill values:
+2. Configure env file:
 
 ```bash
 cp .env.example .env
 ```
 
-4. Deploy `GuardianVault.sol` on your CRE-supported testnet and set:
-
+Required env values:
 - `RPC_URL`
 - `PRIVATE_KEY`
 - `GUARDIAN_CONTRACT`
 - `CHAIN_ID`
 
-## Run Locally (without CRE)
-
-```bash
-python scripts/risk_engine.py --input simulation-data/sample_wallet.json --output simulation-data/risk_decision.json --threshold 70
-python scripts/onchain_action.py
-```
-
-## Backend API
-
-Start API server:
+3. Run backend:
 
 ```bash
 uvicorn backend.app:app --reload --port 8000
 ```
 
-Endpoints:
+4. Run frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## API Endpoints
 
 - `GET /health`
 - `POST /risk/evaluate`
@@ -102,62 +121,46 @@ Endpoints:
 - `POST /risk/pipeline`
 - `GET /runs?limit=20`
 
-Example evaluate request:
+## Reproducible Simulation
 
-```json
-{
-	"signals": {
-		"wallet": "0x1111111111111111111111111111111111111111",
-		"approvalAmountPercent": 95,
-		"contractReputationScore": 18,
-		"transactionVelocity": 12,
-		"velocityThreshold": 10,
-		"newContractInteraction": true,
-		"blacklistMatch": true
-	},
-	"threshold": 70
-}
-```
-
-One-command backend demo artifact generation:
+Local deterministic run:
 
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/run_demo.ps1
+python scripts/risk_engine.py --input simulation-data/sample_wallet.json --output simulation-data/risk_decision.json --threshold 70
+python scripts/onchain_action.py
 ```
 
-This creates:
-
-- `simulation-data/demo_api_result.json`
-
-## Run with CRE Simulation (CRE CLI v1.2+)
-
-```bash
-cre workflow simulate <workflow-folder>
-```
-
-Example used in this workspace:
+CRE simulation example:
 
 ```bash
 cd sentinel-ai/sentinel-ai
 cre workflow simulate sentinel-guardian-go --non-interactive --trigger-index 0
 ```
 
-Expected outputs:
+Artifacts generated in `simulation-data/` include:
+- `risk_decision.json`
+- `onchain_result.json`
+- `demo_api_result.json`
+- `proof_bundle.md`
+- `backend_runs.jsonl`
 
-- `simulation-data/risk_decision.json`
-- `simulation-data/onchain_result.json`
-- `simulation-data/cre_simulation.log`
-- transaction hash(es) in output when threshold is crossed
+## 6-Month Product Plan
 
-## Submission Proof Checklist
+### Month 1–2: Reliability & Security Hardening
+- Improve key handling and secrets policy
+- Add stronger validation for wallet signal payloads
+- Expand test coverage for risk engine and API
 
-- Include deployed contract address and network
-- Include TX hash for `reportRisk` and/or `activateProtection`
-- Include explorer links
-- Attach simulation logs from `cre simulate`
-- Add final write-up from `submission.md`
+### Month 3–4: Intelligence & Explainability
+- Add explanation payloads for each score component
+- Introduce configurable policy profiles
+- Build richer dashboard telemetry and incident timelines
 
-## Notes
+### Month 5–6: Decentralization & Expansion
+- Multi-chain support groundwork and chain-specific policy routing
+- CRE orchestration improvements and failover execution paths
+- Governance-ready policy update flow for flags and thresholds
 
-- Decisioning is deterministic and reproducible.
-- The AI explanation layer is optional and can be added after MVP.
+## Thank You
+
+Thank you for reviewing SentinelAI. This project is built to demonstrate practical, autonomous wallet safety with transparent rules, verifiable on-chain actions, and reproducible outputs. Feedback, issues, and contributions are welcome.
