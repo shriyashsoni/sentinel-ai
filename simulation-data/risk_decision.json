@@ -1,0 +1,17 @@
+{
+  "wallet": "0xTest",
+  "action": "monitor",
+  "riskScore": 40,
+  "threshold": 70,
+  "triggered": false,
+  "reason": "approvalAmountPercent > 80 (+40)",
+  "signals": {
+    "wallet": "0xTest",
+    "approvalAmountPercent": 99,
+    "contractReputationScore": 50,
+    "transactionVelocity": 0,
+    "velocityThreshold": 10,
+    "newContractInteraction": false,
+    "blacklistMatch": false
+  }
+}

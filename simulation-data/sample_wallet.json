@@ -1,0 +1,9 @@
+{
+  "wallet": "0x1111111111111111111111111111111111111111",
+  "approvalAmountPercent": 95,
+  "contractReputationScore": 18,
+  "transactionVelocity": 12,
+  "velocityThreshold": 10,
+  "newContractInteraction": true,
+  "blacklistMatch": true
+}

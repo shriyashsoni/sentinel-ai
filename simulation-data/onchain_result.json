@@ -1,0 +1,9 @@
+{
+  "status": "executed",
+  "wallet": "0x1111111111111111111111111111111111111111",
+  "riskScore": 105,
+  "reportRiskTxHash": "4c93228a7e654fa8d1b03852cd8b5d36d8831f5e1f97d964031b52bc7f1e04f2",
+  "reportRiskBlock": 10375755,
+  "activateProtectionTxHash": "1feae408635bf608be33e8d5e04a50e4607128481c2af10615e4a054ac33f204",
+  "activateProtectionBlock": 10375756
+}

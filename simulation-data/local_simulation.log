@@ -1,0 +1,26 @@
+{
+  "wallet": "0x1111111111111111111111111111111111111111",
+  "action": "activateProtection",
+  "riskScore": 105,
+  "threshold": 70,
+  "triggered": true,
+  "reason": "approvalAmountPercent > 80 (+40), blacklistMatch == true (+30), contractReputationScore < 30 (+20), transactionVelocity > velocityThreshold (+10), newContractInteraction == true (+5)",
+  "signals": {
+    "wallet": "0x1111111111111111111111111111111111111111",
+    "approvalAmountPercent": 95,
+    "contractReputationScore": 18,
+    "transactionVelocity": 12,
+    "velocityThreshold": 10,
+    "newContractInteraction": true,
+    "blacklistMatch": true
+  }
+}
+{
+  "status": "executed",
+  "wallet": "0x1111111111111111111111111111111111111111",
+  "riskScore": 105,
+  "reportRiskTxHash": "7eb8a3ef33a221aa19789411ef3f6409b99269df8e6c48c442bff3d7a3970c76",
+  "reportRiskBlock": 10375081,
+  "activateProtectionTxHash": "d0048553947597b28b91b00594b27b57facb7d40bf96b1cba3f619853b79cbc7",
+  "activateProtectionBlock": 10375082
+}
