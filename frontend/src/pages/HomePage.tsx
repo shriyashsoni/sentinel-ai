@@ -1,9 +1,31 @@
 import { motion } from 'framer-motion'
 import { ThreeHero } from '../components/ThreeHero'
-import { Link } from 'react-router-dom'
-import { ShieldCheck, Zap, Link as LinkIcon, ScanEye } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ShieldCheck, Zap, Link as LinkIcon, ScanEye, Wallet } from 'lucide-react'
+import { useAccount, useConnect } from 'wagmi'
+import { useEffect } from 'react'
 
 export function HomePage() {
+  const { isConnected } = useAccount()
+  const { connect, connectors, isPending } = useConnect()
+  const navigate = useNavigate()
+
+  // Redirect to dashboard when wallet connects
+  useEffect(() => {
+    if (isConnected) {
+      navigate('/dashboard')
+    }
+  }, [isConnected, navigate])
+
+  const handleLaunchApp = () => {
+    if (isConnected) {
+      navigate('/dashboard')
+    } else {
+      // Trigger wallet connect
+      connect({ connector: connectors[0] })
+    }
+  }
+
   return (
     <div className="page home-page">
       {/* Hero Section */}
@@ -23,7 +45,17 @@ export function HomePage() {
               Real-time monitoring, automated threat neutralizing, and verifiable proofs.
             </p>
             <div className="hero-actions">
-              <Link to="/dashboard" className="btn btn-primary">Launch App</Link>
+              <button 
+                onClick={handleLaunchApp} 
+                className="btn btn-primary"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>Connecting...</>
+                ) : (
+                  <><Wallet size={18} /> Launch App</>
+                )}
+              </button>
               <Link to="/whitepaper" className="btn btn-outline">Read Docs</Link>
             </div>
           </motion.div>
