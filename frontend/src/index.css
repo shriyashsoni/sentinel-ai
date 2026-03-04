@@ -785,3 +785,168 @@ input[type="checkbox"] {
   border-radius: 4px;
   font-weight: 600;
 }
+
+/* Transaction Panel Styles */
+.tx-panel {
+  padding: 1rem;
+}
+
+.tx-panel .panel-header.compact {
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.tx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.tx-empty small {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.tx-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+}
+
+.tx-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tx-item.pending {
+  border-color: rgba(236, 201, 75, 0.3);
+}
+
+.tx-item.success {
+  border-color: rgba(0, 255, 157, 0.2);
+}
+
+.tx-item.failed {
+  border-color: rgba(255, 66, 66, 0.3);
+}
+
+.tx-status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tx-item.pending .tx-status-icon {
+  color: #ecc94b;
+  background: rgba(236, 201, 75, 0.1);
+}
+
+.tx-item.success .tx-status-icon {
+  color: var(--secondary);
+  background: rgba(0, 255, 157, 0.1);
+}
+
+.tx-item.failed .tx-status-icon {
+  color: var(--danger);
+  background: rgba(255, 66, 66, 0.1);
+}
+
+.tx-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-action {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.tx-hash {
+  font-size: 0.75rem;
+}
+
+.etherscan-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.2s;
+}
+
+.etherscan-link:hover {
+  color: #8ca6ff;
+  text-decoration: underline;
+}
+
+.tx-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tx-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: var(--glass-border);
+  font-size: 0.7rem;
+}
+
+.contract-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.view-contract-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.view-contract-link:hover {
+  color: #8ca6ff;
+}
+
+/* Spin animation for pending */
+.spin-slow {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

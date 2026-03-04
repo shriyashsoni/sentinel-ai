@@ -1,15 +1,25 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import type { FormEvent } from 'react'
 import { formatEther } from 'viem'
-import { useAccount, useBalance, useReadContract, useWriteContract } from 'wagmi'
+import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { guardianContract, chainlinkPriceFeed } from '../lib/guardian'
 import { getHealth, getRuns, runPipeline, type WalletSignals } from '../lib/api'
 import { 
   Activity, Zap, Settings, RefreshCw, 
   Database, Terminal, 
-  Scan, Lock, Globe, Shield, Radio, Cpu, BarChart3, Link
+  Scan, Lock, Globe, Shield, Radio, Cpu, BarChart3, Link, ExternalLink, CheckCircle, Clock, AlertTriangle
 } from 'lucide-react'
+
+// Transaction type for tracking
+type Transaction = {
+  id: string
+  hash: string
+  action: string
+  status: 'pending' | 'success' | 'failed'
+  timestamp: number
+  target?: string
+}
 
 const initialSignals: WalletSignals = {
   wallet: '0x1111111111111111111111111111111111111111',
@@ -115,12 +125,55 @@ export function DashboardPage() {
   // New state for modules
   const [modules, setModules] = useState(MOCK_Protect_Modules)
 
+  // Transaction tracking
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [lastTxHash, setLastTxHash] = useState<`0x${string}` | undefined>()
+
   // Admin / Write Actions State
-  const { writeContract, isPending: isWritePending } = useWriteContract()
+  const { writeContract, isPending: isWritePending, data: txHash } = useWriteContract()
   const [targetUser, setTargetUser] = useState('')
   const [targetToken, setTargetToken] = useState('')
   const [flagAddr, setFlagAddr] = useState('')
   const [reportScore, setReportScore] = useState(50)
+
+  // Wait for transaction receipt
+  const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
+    hash: lastTxHash,
+  })
+
+  // Track transaction hash changes
+  useEffect(() => {
+    if (txHash) {
+      setLastTxHash(txHash)
+    }
+  }, [txHash])
+
+  // Update transaction status when confirmed
+  useEffect(() => {
+    if (isTxSuccess && lastTxHash) {
+      setTransactions(prev => 
+        prev.map(tx => 
+          tx.hash === lastTxHash ? { ...tx, status: 'success' } : tx
+        )
+      )
+      // Refetch contract state after successful transaction
+      void protectionQuery.refetch()
+      void scoreQuery.refetch()
+    }
+  }, [isTxSuccess, lastTxHash])
+
+  // Helper to add transaction to history
+  const addTransaction = useCallback((action: string, hash: string, target?: string) => {
+    const newTx: Transaction = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      hash,
+      action,
+      status: 'pending',
+      timestamp: Date.now(),
+      target,
+    }
+    setTransactions(prev => [newTx, ...prev].slice(0, 10)) // Keep last 10
+  }, [])
 
   // Derived state
   const walletForRead = useMemo(() => (targetUser || address || signals.wallet), [targetUser, address, signals.wallet])
@@ -171,6 +224,9 @@ export function DashboardPage() {
         functionName: 'flagContract',
         args: [flagAddr as `0x${string}`],
         chainId: guardianContract.chainId
+    }, {
+      onSuccess: (hash) => addTransaction('Flag Contract', hash, flagAddr),
+      onError: (err) => console.error('Flag contract failed:', err)
     })
   }
 
@@ -182,6 +238,9 @@ export function DashboardPage() {
         functionName: 'emergencyLock',
         args: [address],
         chainId: guardianContract.chainId
+    }, {
+      onSuccess: (hash) => addTransaction('Emergency Lock', hash, address),
+      onError: (err) => console.error('Emergency lock failed:', err)
     })
   }
 
@@ -193,6 +252,9 @@ export function DashboardPage() {
         functionName: 'reportRisk',
         args: [activeTarget as `0x${string}`, BigInt(reportScore)],
         chainId: guardianContract.chainId
+    }, {
+      onSuccess: (hash) => addTransaction(`Report Risk (Score: ${reportScore})`, hash, activeTarget),
+      onError: (err) => console.error('Report risk failed:', err)
     })
   }
 
@@ -205,6 +267,9 @@ export function DashboardPage() {
         functionName: 'revokeHighRiskApproval',
         args: [activeTarget as `0x${string}`, targetToken as `0x${string}`],
         chainId: guardianContract.chainId
+    }, {
+      onSuccess: (hash) => addTransaction('Revoke Approval', hash, targetToken),
+      onError: (err) => console.error('Revoke approval failed:', err)
     })
   }
 
@@ -563,6 +628,72 @@ export function DashboardPage() {
 
           <motion.div className="panel feed-panel" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
              <LiveFeed />
+          </motion.div>
+
+          {/* Blockchain Transactions Panel */}
+          <motion.div className="panel tx-panel" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}>
+             <div className="panel-header compact">
+               <div className="panel-title"><Link size={14} /> On-Chain Transactions</div>
+               {(isWritePending || isTxLoading) && <span className="chainlink-badge"><Clock size={10} /> Pending</span>}
+             </div>
+             <div className="tx-list">
+               {transactions.length === 0 ? (
+                 <div className="tx-empty">
+                   <Shield size={24} style={{ opacity: 0.3 }} />
+                   <span>No transactions yet</span>
+                   <small>Use Guardian Controls to interact with the smart contract</small>
+                 </div>
+               ) : (
+                 <AnimatePresence>
+                   {transactions.map(tx => (
+                     <motion.div 
+                       key={tx.id}
+                       className={`tx-item ${tx.status}`}
+                       initial={{ opacity: 0, x: 10 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       exit={{ opacity: 0 }}
+                     >
+                       <div className="tx-status-icon">
+                         {tx.status === 'pending' && <Clock size={14} className="spin-slow" />}
+                         {tx.status === 'success' && <CheckCircle size={14} />}
+                         {tx.status === 'failed' && <AlertTriangle size={14} />}
+                       </div>
+                       <div className="tx-details">
+                         <div className="tx-action">{tx.action}</div>
+                         <div className="tx-hash">
+                           <a 
+                             href={`https://sepolia.etherscan.io/tx/${tx.hash}`} 
+                             target="_blank" 
+                             rel="noopener noreferrer"
+                             className="etherscan-link"
+                           >
+                             {tx.hash.slice(0, 10)}...{tx.hash.slice(-8)}
+                             <ExternalLink size={10} />
+                           </a>
+                         </div>
+                       </div>
+                       <div className="tx-time">
+                         {new Date(tx.timestamp).toLocaleTimeString()}
+                       </div>
+                     </motion.div>
+                   ))}
+                 </AnimatePresence>
+               )}
+             </div>
+             <div className="tx-footer">
+               <span className="contract-badge">
+                 <Shield size={10} />
+                 Contract: {guardianContract.address.slice(0, 6)}...{guardianContract.address.slice(-4)}
+               </span>
+               <a 
+                 href={`https://sepolia.etherscan.io/address/${guardianContract.address}`}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="view-contract-link"
+               >
+                 View on Etherscan <ExternalLink size={10} />
+               </a>
+             </div>
           </motion.div>
         </div>
 
