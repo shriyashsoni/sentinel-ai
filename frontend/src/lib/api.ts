@@ -1,8 +1,21 @@
 import axios from 'axios'
 
+// Determine API URL based on environment
+const getApiUrl = () => {
+  // In production (Vercel), use /api
+  if (import.meta.env.PROD) {
+    return '/api'
+  }
+  // In development, use env variable or localhost
+  return import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
+  baseURL: getApiUrl(),
   timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 })
 
 export type WalletSignals = {
