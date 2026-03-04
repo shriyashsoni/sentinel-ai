@@ -243,16 +243,36 @@ export function DashboardPage() {
 
   const handleSoS = () => {
     if (!address) return
-    writeContract({
+    // Dynamic function: unlock if active, lock if inactive
+    if (protectionActive) {
+      writeContract({
+        abi: guardianContract.abi,
+        address: guardianContract.address as `0x${string}`,
+        functionName: 'unlockVault', // Custom function in SentinelGuardian logic
+        args: [address],
+        chainId: guardianContract.chainId
+      }, {
+        onSuccess: (hash) => {
+          addTransaction('Manual Unlock', hash, address)
+          setLastTxHash(hash as `0x${string}`)
+        },
+        onError: (err) => console.error('Unlock failed:', err)
+      })
+    } else {
+      writeContract({
         abi: guardianContract.abi,
         address: guardianContract.address as `0x${string}`,
         functionName: 'emergencyLock',
         args: [address],
         chainId: guardianContract.chainId
-    }, {
-      onSuccess: (hash) => addTransaction('Emergency Lock', hash, address),
-      onError: (err) => console.error('Emergency lock failed:', err)
-    })
+      }, {
+        onSuccess: (hash) => {
+          addTransaction('Emergency Lock', hash, address)
+          setLastTxHash(hash as `0x${string}`)
+        },
+        onError: (err) => console.error('Emergency lock failed:', err)
+      })
+    }
   }
 
   const handleRevoke = (e: FormEvent) => {
@@ -284,6 +304,26 @@ export function DashboardPage() {
     try {
       const response = await runPipeline(signals, threshold)
       setPipelineResult(response)
+      
+      // If risk is high, we can also trigger on-chain action via smart contract
+      if (response.riskScore >= threshold) {
+        try {
+          // Automatic emergency lock if high risk detected
+          writeContract({
+            abi: guardianContract.abi,
+            address: guardianContract.address as `0x${string}`,
+            functionName: 'emergencyLock',
+            args: [signals.wallet as `0x${string}`],
+            chainId: guardianContract.chainId
+          }, {
+            onSuccess: (hash) => addTransaction(`Risk Auto-Lock: ${response.riskScore}%`, hash, signals.wallet),
+            onError: (err) => console.error('Auto-lock failed:', err)
+          })
+        } catch (contractErr) {
+          console.error("Contract call failed:", contractErr)
+        }
+      }
+
       const history = await getRuns(10)
       setRuns(history)
       void protectionQuery.refetch()
