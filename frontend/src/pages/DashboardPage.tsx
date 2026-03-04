@@ -3,12 +3,12 @@ import type { FormEvent } from 'react'
 import { formatEther } from 'viem'
 import { useAccount, useBalance, useReadContract, useWriteContract } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
-import { guardianContract } from '../lib/guardian'
+import { guardianContract, chainlinkPriceFeed } from '../lib/guardian'
 import { getHealth, getRuns, runPipeline, type WalletSignals } from '../lib/api'
 import { 
   Activity, Zap, Settings, RefreshCw, 
   Database, Terminal, 
-  Scan, Lock, Globe, Shield, Radio, Cpu, BarChart3
+  Scan, Lock, Globe, Shield, Radio, Cpu, BarChart3, Link
 } from 'lucide-react'
 
 const initialSignals: WalletSignals = {
@@ -141,6 +141,23 @@ export function DashboardPage() {
     args: [walletForRead as `0x${string}`],
     chainId: guardianContract.chainId
   })
+
+  // Chainlink ETH/USD Price Feed Query
+  const priceQuery = useReadContract({
+    abi: chainlinkPriceFeed.abi,
+    address: chainlinkPriceFeed.address as `0x${string}`,
+    functionName: 'latestRoundData',
+    chainId: chainlinkPriceFeed.chainId,
+  })
+
+  // Format ETH price from Chainlink (8 decimals)
+  const ethPrice = useMemo(() => {
+    if (priceQuery.data) {
+      const [, answer] = priceQuery.data as [bigint, bigint, bigint, bigint, bigint]
+      return (Number(answer) / 1e8).toFixed(2)
+    }
+    return '---'
+  }, [priceQuery.data])
 
   // Use the connected address as default target if empty
   const activeTarget = targetUser || address || '0x0000000000000000000000000000000000000000'
@@ -294,6 +311,21 @@ export function DashboardPage() {
            className="stat-card"
            initial={{ opacity: 0, y: -20 }}
            animate={{ opacity: 1, y: 0 }}
+           transition={{ delay: 0.15 }}
+         >
+            <div className="stat-icon-wrap"><Link size={20} color="#375bd2" /></div>
+            <div>
+              <div className="stat-label">Chainlink ETH/USD</div>
+              <div className="stat-value" style={{color: '#375bd2'}}>
+                ${ethPrice}
+              </div>
+            </div>
+         </motion.div>
+
+         <motion.div 
+           className="stat-card"
+           initial={{ opacity: 0, y: -20 }}
+           animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.2 }}
          >
             <div className="stat-icon-wrap"><Cpu size={20} color="#4264fb" /></div>
@@ -307,7 +339,7 @@ export function DashboardPage() {
            className="stat-card"
            initial={{ opacity: 0, y: -20 }}
            animate={{ opacity: 1, y: 0 }}
-           transition={{ delay: 0.3 }}
+           transition={{ delay: 0.25 }}
          >
             <div className="stat-icon-wrap"><Activity size={20} color="#ffb742" /></div>
             <div>
