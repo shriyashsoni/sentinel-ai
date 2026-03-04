@@ -359,11 +359,11 @@ export function DashboardPage() {
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.1 }}
          >
-            <div className="stat-icon-wrap"><Shield size={20} color={protectionActive ? "#00ff9d" : "#a0aec0"} /></div>
+            <div className="stat-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.1)' }}><Shield size={18} color={protectionActive ? "var(--secondary)" : "var(--text-muted)"} /></div>
             <div>
-              <div className="stat-label">Protection Status</div>
-              <div className="stat-value" style={{color: protectionActive ? '#00ff9d' : '#a0aec0'}}>
-                {protectionActive ? 'ACTIVE GUARD' : 'INACTIVE'}
+              <div className="stat-label">Protection</div>
+              <div className="stat-value" style={{color: protectionActive ? 'var(--secondary)' : 'var(--text-muted)'}}>
+                {protectionActive ? 'ENABLED' : 'INACTIVE'}
               </div>
             </div>
          </motion.div>
@@ -374,10 +374,10 @@ export function DashboardPage() {
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.15 }}
          >
-            <div className="stat-icon-wrap"><LinkIcon size={20} color="#375bd2" /></div>
+            <div className="stat-icon-wrap" style={{ background: 'rgba(55, 91, 210, 0.1)' }}><LinkIcon size={18} color="#375bd2" /></div>
             <div>
-              <div className="stat-label">Chainlink ETH/USD</div>
-              <div className="stat-value" style={{color: '#375bd2'}}>
+              <div className="stat-label">ETH/USD</div>
+              <div className="stat-value" style={{color: '#8ca6ff'}}>
                 ${ethPrice}
               </div>
             </div>
@@ -389,9 +389,9 @@ export function DashboardPage() {
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.2 }}
          >
-            <div className="stat-icon-wrap"><Cpu size={20} color="#4264fb" /></div>
+            <div className="stat-icon-wrap" style={{ background: health === 'Healthy' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}><Cpu size={18} color={health === 'Healthy' ? "var(--secondary)" : "var(--danger)"} /></div>
             <div>
-              <div className="stat-label">System Health</div>
+              <div className="stat-label">Node Status</div>
               <div className="stat-value">{health}</div>
             </div>
          </motion.div>
@@ -402,9 +402,9 @@ export function DashboardPage() {
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.25 }}
          >
-            <div className="stat-icon-wrap"><Activity size={20} color="#ffb742" /></div>
+            <div className="stat-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.1)' }}><Activity size={18} color="var(--warning)" /></div>
             <div>
-              <div className="stat-label">Wallet Balance</div>
+              <div className="stat-label">Wallet</div>
               <div className="stat-value">{balance} ETH</div>
             </div>
          </motion.div>
