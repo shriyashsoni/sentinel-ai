@@ -1,4 +1,4 @@
-import { Network, BrainCircuit, Cpu, Zap, AlertOctagon, Shield, Database, Link as LinkIcon, Lock, Code, Globe, Activity, Layers } from 'lucide-react'
+import { Network, Cpu, Shield, Database, Link as LinkIcon, Lock, Code, Globe, Activity, Layers } from 'lucide-react'
 
 export function WhitepaperPage() {
   return (
