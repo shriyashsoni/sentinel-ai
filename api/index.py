@@ -130,11 +130,24 @@ def evaluate_and_execute(signals: dict[str, Any], threshold: int) -> dict[str, A
 
 # ============== Storage ==============
 
+# Use a global list since Vercel warm starts can share this, though not permanent
 run_history: list[dict] = []
 
-
 def append_run(event_type: str, data: dict) -> None:
-    run_history.append({"event": event_type, "data": data})
+    # Ensure nested riskScore is captured correctly for the UI
+    risk_score = 0
+    if "decision" in data and "riskScore" in data["decision"]:
+        risk_score = data["decision"]["riskScore"]
+    elif "riskScore" in data:
+        risk_score = data["riskScore"]
+        
+    entry = {
+        "event": event_type, 
+        "data": data,
+        "riskScore": risk_score, # Flatten for table UI
+        "timestamp": "2026-03-04T10:55:00Z" # Mock real-time timestamp
+    }
+    run_history.append(entry)
 
 
 def get_recent_runs(limit: int = 20) -> list[dict]:
@@ -145,10 +158,10 @@ def get_recent_runs(limit: int = 20) -> list[dict]:
 
 app = FastAPI(title="SentinelAI Backend", version="0.1.0")
 
-cors_origins = os.getenv("CORS_ALLOW_ORIGINS", "*").split(",")
+# Setup CORS for Vercel
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in cors_origins if o.strip()] or ["*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -160,8 +173,7 @@ def root() -> dict[str, str]:
     return {
         "name": "SentinelAI Backend",
         "status": "ok",
-        "health": "/api/health",
-        "docs": "/api/docs",
+        "health": "/health",
     }
 
 

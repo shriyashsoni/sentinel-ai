@@ -738,8 +738,21 @@ export function DashboardPage() {
                ) : (
                  runs.map((run, i) => (
                    <tr key={i}>
-                     <td>{new Date(run.timestamp as string || Date.now()).toLocaleTimeString()}</td>
-                     <td><span className={`score-pill ${(run.riskScore as number) > 70 ? 'high' : 'low'}`}>{run.riskScore as number}</span></td>
+                     <td>{new Date((run.timestamp as string) || Date.now()).toLocaleTimeString()}</td>
+                     <td><span className={`score-pill ${(run.riskScore as number) > 70 ? 'high' : 'low'}`}>{run.riskScore as number || (run.data as any)?.decision?.riskScore || 0}</span></td>
+                     <td>{(run.data as any)?.decision?.action || (run.data as any)?.action || 'EVALUATE'}</td>
+                     <td>
+                        <span style={{fontFamily:'var(--font-mono)', fontSize:'0.75rem'}}>
+                          {(run.data as any)?.decision?.wallet?.slice(0, 6) || (run.data as any)?.wallet?.slice(0, 6)}...
+                        </span>
+                     </td>
+                     <td>
+                        <div className="chip active" style={{fontSize:'0.6rem', padding:'2px 8px'}}>
+                          {run.event?.replace('_', ' ').toUpperCase() || 'COMPLETED'}
+                        </div>
+                     </td>
+                   </tr>
+                 ))
                      <td>{(run.decision as any)?.action}</td>
                      <td className="mono">{String((run.inputs as any)?.wallet || '').slice(0,6)}...</td>
                      <td><span className="status-badge success">Verified</span></td>
