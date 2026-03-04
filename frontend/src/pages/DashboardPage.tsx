@@ -248,7 +248,7 @@ export function DashboardPage() {
       writeContract({
         abi: guardianContract.abi,
         address: guardianContract.address as `0x${string}`,
-        functionName: 'unlockVault', // Custom function in SentinelGuardian logic
+        functionName: 'activateProtection', // Reverting to existing function in ABI
         args: [address],
         chainId: guardianContract.chainId
       }, {
@@ -748,14 +748,9 @@ export function DashboardPage() {
                      </td>
                      <td>
                         <div className="chip active" style={{fontSize:'0.6rem', padding:'2px 8px'}}>
-                          {run.event?.replace('_', ' ').toUpperCase() || 'COMPLETED'}
+                          {String(run.event || '').replace('_', ' ').toUpperCase() || 'COMPLETED'}
                         </div>
                      </td>
-                   </tr>
-                 ))
-                     <td>{(run.decision as any)?.action}</td>
-                     <td className="mono">{String((run.inputs as any)?.wallet || '').slice(0,6)}...</td>
-                     <td><span className="status-badge success">Verified</span></td>
                    </tr>
                  ))
                )}
