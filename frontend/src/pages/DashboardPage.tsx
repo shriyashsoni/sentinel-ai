@@ -8,7 +8,7 @@ import { getHealth, getRuns, runPipeline, type WalletSignals } from '../lib/api'
 import { 
   Activity, Zap, Settings, RefreshCw, 
   Database, Terminal, 
-  Scan, Lock, Globe, Shield, Radio, Cpu, BarChart3, Link, ExternalLink, CheckCircle, Clock, AlertTriangle
+  Scan, Lock, Globe, Shield, Radio, Cpu, BarChart3, Link as LinkIcon, CheckCircle, Clock, AlertTriangle
 } from 'lucide-react'
 
 // Transaction type for tracking
@@ -30,9 +30,6 @@ const initialSignals: WalletSignals = {
   newContractInteraction: true,
   blacklistMatch: true,
 }
-
-// Define the type for the modules
-type EnhancedIcon = any; // Simplifying for build pass
 
 const MOCK_Protect_Modules = [
   { id: 1, name: 'Phishing Detector', active: true, desc: 'Real-time domain verification and blacklisting.', icon: Globe },
@@ -137,7 +134,6 @@ export function DashboardPage() {
   const [health, setHealth] = useState<string>('Unknown')
   const [pipelineResult, setPipelineResult] = useState<Record<string, unknown> | null>(null)
   const [runs, setRuns] = useState<Record<string, unknown>[]>([])
-  const [error, setError] = useState('')
   
   // New state for modules
   const [modules, setModules] = useState(MOCK_Protect_Modules)
@@ -148,13 +144,11 @@ export function DashboardPage() {
 
   // Admin / Write Actions State
   const { writeContract, isPending: isWritePending, data: txHash } = useWriteContract()
-  const [targetUser, setTargetUser] = useState('')
   const [targetToken, setTargetToken] = useState('')
   const [flagAddr, setFlagAddr] = useState('')
-  const [reportScore, setReportScore] = useState(50)
 
   // Wait for transaction receipt
-  const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
+  const { isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
     hash: lastTxHash,
   })
 
@@ -193,7 +187,7 @@ export function DashboardPage() {
   }, [])
 
   // Derived state
-  const walletForRead = useMemo(() => (targetUser || address || signals.wallet), [targetUser, address, signals.wallet])
+  const walletForRead = useMemo(() => (address || signals.wallet), [address, signals.wallet])
 
   const balanceQuery = useBalance({ address })
 
@@ -230,7 +224,7 @@ export function DashboardPage() {
   }, [priceQuery.data])
 
   // Use the connected address as default target if empty
-  const activeTarget = targetUser || address || '0x0000000000000000000000000000000000000000'
+  const activeTarget = address || '0x0000000000000000000000000000000000000000'
 
   const handleFlagContract = (e: FormEvent) => {
     e.preventDefault()
@@ -261,20 +255,6 @@ export function DashboardPage() {
     })
   }
 
-  const handleReportRisk = (e: FormEvent) => {
-    e.preventDefault()
-    writeContract({
-        abi: guardianContract.abi,
-        address: guardianContract.address as `0x${string}`,
-        functionName: 'reportRisk',
-        args: [activeTarget as `0x${string}`, BigInt(reportScore)],
-        chainId: guardianContract.chainId
-    }, {
-      onSuccess: (hash) => addTransaction(`Report Risk (Score: ${reportScore})`, hash, activeTarget),
-      onError: (err) => console.error('Report risk failed:', err)
-    })
-  }
-
   const handleRevoke = (e: FormEvent) => {
     e.preventDefault()
     if (!targetToken) return
@@ -301,7 +281,6 @@ export function DashboardPage() {
   async function handleRunPipeline(event: FormEvent) {
     event.preventDefault()
     setLoading(true)
-    setError('')
     try {
       const response = await runPipeline(signals, threshold)
       setPipelineResult(response)
@@ -310,7 +289,7 @@ export function DashboardPage() {
       void protectionQuery.refetch()
       void scoreQuery.refetch()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Pipeline call failed')
+      console.error(err instanceof Error ? err.message : 'Pipeline call failed')
     } finally {
       setLoading(false)
     }
@@ -395,7 +374,7 @@ export function DashboardPage() {
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.15 }}
          >
-            <div className="stat-icon-wrap"><Link size={20} color="#375bd2" /></div>
+            <div className="stat-icon-wrap"><LinkIcon size={20} color="#375bd2" /></div>
             <div>
               <div className="stat-label">Chainlink ETH/USD</div>
               <div className="stat-value" style={{color: '#375bd2'}}>
